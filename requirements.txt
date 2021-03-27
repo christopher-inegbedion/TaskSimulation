@@ -1,0 +1,1 @@
+git+https://github.com/christopher-inegbedion/Task.git@dev#egg=taskr-task
