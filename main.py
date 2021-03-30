@@ -13,12 +13,14 @@ import asyncio
 
 my_user = None
 my_pipeline_id = None
+loop = asyncio.new_event_loop()
+asyncio.set_event_loop(loop)
 
 
 def main():
 
     while True:
-        action = input("\ncommand: ")
+        action = input("\n~Wcommand: ")
 
         if action == "exit":
             return False
@@ -31,14 +33,14 @@ def parse_action(command):
     if command == "cu":
         return create_user()
     elif command == "cp":
-        asyncio.get_event_loop().run_until_complete(create_pipe())
+        loop.run_until_complete(create_pipe())
         return
     elif command == "sp":
-        asyncio.get_event_loop().run_until_complete(start_pipeline())
+        loop.run_until_complete(start_pipeline())
     elif command == "sc":
-        asyncio.get_event_loop().run_until_complete(start_constraint())
+        loop.run_until_complete(start_constraint())
     elif command == "stpp":
-        asyncio.get_event_loop().run_until_complete(stop_pipeline())
+        loop.run_until_complete(stop_pipeline())
 
 
 def create_user():
@@ -58,26 +60,44 @@ async def create_pipe():
         print("A user has not been created")
         return
 
+    addr = "ws://localhost:5000/create_pipeline"
+    socket = await websockets.connect(addr)
+
     task_name = input("~enter task name: ")
     stages = []
+    available_constraints = None
     while True:
         stage_name = input("~enter stage name: ")
         if stage_name != "x":
-            stages.append(stage_name)
+            print("These are the available constraints")
+
+            if available_constraints == None:
+                available_constraints = jsonpickle.decode(await socket.recv())
+                
+            print(available_constraints["constraints_available"])
+            selected_constraints = []
+            while True:
+                constraints = input(
+                    f"Please select the constraints for Stage {stage_name}: ")
+                if constraints != "x":
+                    selected_constraints.append(int(constraints))
+
+                else:
+                    break
+            stages.append({"stage_name": stage_name,
+                           "constraints": selected_constraints})
         else:
             break
-    number_of_constraints = input("~enter number of constraints: ")
+
+    print(stages)
 
     data_to_send = {
         "user_id": my_user['id'],
         "task_name": task_name,
-        "stage_names": stages,
-        "number_of_constraints": number_of_constraints
+        "stages": stages
     }
 
-    addr = "ws://localhost:5000/create_pipeline"
-    socket = await websockets.connect(addr)
-    await socket.send(json.dumps(data_to_send))
+    await socket.send(jsonpickle.encode(data_to_send))
 
     result = jsonpickle.decode(await socket.recv())
     my_pipeline_id = result["id"]
@@ -98,10 +118,11 @@ async def start_pipeline():
 
     while socket.open:
         response = await socket.recv()
-        print(await socket.recv())
 
         if response == "done":
             break
+
+        print(response)
 
 
 async def start_constraint():

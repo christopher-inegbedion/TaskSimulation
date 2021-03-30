@@ -1,1 +1,2 @@
 git+https://github.com/christopher-inegbedion/Task.git@dev#egg=taskr-task
+git+https://github.com/christopher-inegbedion/ConstraintsStagesPy.git@dev#egg=constraints-stages

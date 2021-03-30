@@ -1,4 +1,8 @@
+from asyncio.events import new_event_loop
+import concurrent.futures
 import asyncio
+from concurrent.futures import thread
+import threading
 from constraints.constraint_main.custom_constraint import CustomConstraint
 from constraints.models.example_models.pause_thread import PauseModel
 from constraints.models.example_models.time_model import TimeModel
@@ -9,6 +13,9 @@ from task_pipeline.pipeline import Pipeline
 from stage.stage import Stage, StageGroup
 import json
 import jsonpickle
+import nest_asyncio
+nest_asyncio.apply()
+
 
 pipelines = {}
 models = [
@@ -16,6 +23,20 @@ models = [
     TimeModel(),
     TestModel()
 ]
+
+all_constraints = [
+    CustomConstraint("con1", PauseModel()),
+    CustomConstraint("con2", PauseModel()),
+    CustomConstraint("con3", PauseModel()),
+    CustomConstraint("con4", PauseModel()),
+    CustomConstraint("con5", PauseModel()),
+    CustomConstraint("con6", PauseModel())
+]
+
+loop = asyncio.new_event_loop()
+asyncio.set_event_loop(loop)
+
+print("Started Pipeline websocket server...")
 
 
 def create_pipeline(user_id, task_name, stage_names, number_of_constraints):
@@ -40,31 +61,65 @@ def create_pipeline(user_id, task_name, stage_names, number_of_constraints):
     return pipeline
 
 
-async def callback(pipe, args):
-    await args[0].send("msg")
+def callback(pipe, args):
+    global loop
+    loop.run_until_complete(
+        call(args[0], pipe.current_stage.log.most_recent_update["msg"]))
+
+
+def close(pipe, args):
+    global loop
+    loop.run_until_complete(_close(args[0]))
+
+
+async def _close(websocket):
+    await websocket.send("done")
+    print(f"< Pipeline completed")
+
+
+async def call(websocket, msg):
+    await websocket.send(msg)
 
 
 async def launch(websocket, path):
-    global pipelines
+    global pipelines, all_constraints
 
     if path == "/create_pipeline":
-        recv_data = json.loads(await websocket.recv())
-        user_id = recv_data["user_id"]
-        task_name = recv_data["task_name"]
-        stage_names = recv_data["stage_names"]
-        number_of_constraints = int(recv_data["number_of_constraints"])
+        stage_group = StageGroup()
 
-        pipeline = create_pipeline(user_id,
-                                   task_name, stage_names, number_of_constraints)
+        available_constraints = {"constraints_available": []}
+        for i in all_constraints:
+            available_constraints["constraints_available"].append(i.name)
+
+        await websocket.send(jsonpickle.encode(available_constraints))
+
+        data = jsonpickle.decode(await websocket.recv())
+        user_id = data["user_id"]
+        task_name = data["task_name"]
+        all_stages = data["stages"]
+        for i in all_stages:
+            stage_name = i["stage_name"]
+            constraints = i["constraints"]
+
+            new_stage = Stage(stage_name)
+            for constr_selected in constraints:
+                constraint = all_constraints[constr_selected]
+                new_stage.add_constraint(constraint)
+
+            stage_group.add_stage(new_stage)
+
+        pipeline = Pipeline(task_name, stage_group)
         pipelines[pipeline.id] = pipeline
 
         print(
             f"< User with ID: {user_id} created Pipeline with ID: {pipeline.id}")
+        print(len(pipeline.constraint_config.stages))
 
+        print("\n< Pipeline created with the following stages:")
         for stage in pipeline.constraint_config.stages:
-            print(f"\n> Stage name: {stage.name}")
+            print(f"- Stage name: {stage.name}")
             for constraint in stage.constraints:
-                print(f"\t> Constraint name: {constraint.name}")
+                print(f"\t- Constraint name: {constraint.name}")
 
         data_to_send = {
             "id": pipeline.id
@@ -76,16 +131,13 @@ async def launch(websocket, path):
 
         if recv_pipeline_id in pipelines:
             pipeline: Pipeline = pipelines[recv_pipeline_id]
+            pipeline.on_update(callback, websocket)
+            pipeline.on_complete(close, websocket)
+
             pipeline.start()
 
-            send_msg = False
             while websocket.open:
                 await asyncio.sleep(0.1)
-                pipeline.on_update(True, callback, websocket)
-
-                if send_msg:
-                    send_msg = False
-                    await websocket.send("msg")
         else:
             await websocket.send("cannot be found")
     elif path == "/start_constraint":
@@ -113,15 +165,10 @@ async def launch(websocket, path):
                         constriant_name, stage_name, int(input_recv))
 
                     if i == number_of_constraints_inputs-1:
-                        print("done here")
                         await websocket.send("done")
                     else:
-                        print("done here")
                         await websocket.send("not done")
 
-                constraint_to_run = pipeline.get_constraint(
-                    constriant_name, stage_name).inputs
-                print(constraint_to_run)
                 pipeline.start_constraint(stage_name, constriant_name)
         else:
             print(
@@ -139,14 +186,7 @@ async def launch(websocket, path):
         else:
             await websocket.send("fail")
 
-
-def pipeline_callback_func(pipeline):
-    global send_msg
-
-    send_msg = True
-
-
 start_server = websockets.serve(launch, "localhost", 5000)
 
-asyncio.get_event_loop().run_until_complete(start_server)
-asyncio.get_event_loop().run_forever()
+loop.run_until_complete(start_server)
+loop.run_forever()
