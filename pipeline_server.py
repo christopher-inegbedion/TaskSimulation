@@ -13,6 +13,7 @@ from task_pipeline.pipeline import Pipeline
 from stage.stage import Stage, StageGroup
 import json
 import jsonpickle
+from internet_model import InternetModel
 import nest_asyncio
 nest_asyncio.apply()
 
@@ -25,7 +26,7 @@ models = [
 ]
 
 all_constraints = [
-    CustomConstraint("con1", PauseModel()),
+    CustomConstraint("con1", InternetModel()),
     CustomConstraint("con2", PauseModel()),
     CustomConstraint("con3", PauseModel()),
     CustomConstraint("con4", PauseModel()),
@@ -36,7 +37,7 @@ all_constraints = [
 loop = asyncio.new_event_loop()
 asyncio.set_event_loop(loop)
 
-print("Started Pipeline websocket server...")
+print("\nStarted Pipeline websocket server...")
 
 
 def create_pipeline(user_id, task_name, stage_names, number_of_constraints):
@@ -137,7 +138,7 @@ async def launch(websocket, path):
             pipeline.start()
 
             while websocket.open:
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(0)
         else:
             await websocket.send("cannot be found")
     elif path == "/start_constraint":
@@ -162,7 +163,7 @@ async def launch(websocket, path):
                 for i in range(number_of_constraints_inputs):
                     input_recv = await websocket.recv()
                     pipeline.add_input_to_constraint(
-                        constriant_name, stage_name, int(input_recv))
+                        constriant_name, stage_name, input_recv)
 
                     if i == number_of_constraints_inputs-1:
                         await websocket.send("done")

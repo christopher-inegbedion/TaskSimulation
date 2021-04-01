@@ -1,12 +1,4 @@
-import json
-import threading
-from time import sleep, time
 import jsonpickle
-from task_pipeline.pipeline import Pipeline
-from task_main.product_task import ProductTask
-from constraints.constraint_main.custom_constraint import CustomConstraint
-from constraints.models.example_models import pause_thread, time_model
-from stage.stage import Stage, StageGroup
 import requests
 import websockets
 import asyncio
@@ -18,9 +10,8 @@ asyncio.set_event_loop(loop)
 
 
 def main():
-
     while True:
-        action = input("\n~Wcommand: ")
+        action = input("\n~command: ")
 
         if action == "exit":
             return False
