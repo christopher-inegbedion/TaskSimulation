@@ -14,12 +14,12 @@ class InternetModel(Model):
         self.input_type = InputType.STRING
         self.input_mode = ConstraintInputMode.PRE_DEF
         self.input_count = 2
-        self.output_type = InputType.STRING
+        self.output_type = InputType.ANY
 
         super().__init__(self.name, self.model_family, self.input_type,
                          self.input_mode, self.input_count, self.output_type)
 
-    def run(self, inputs):
+    def run(self, inputs, configuration_inputs={}):
         super().run(inputs)
 
         base_currency = inputs[0]
@@ -35,7 +35,7 @@ class InternetModel(Model):
             response = {"response": "failure"}
             print("failure")
 
-        self._complete(jsonpickle.encode(response))
+        self._complete(response["response"]["conversion_rate"])
 
     def _complete(self, data, aborted=False):
         super()._complete(data, aborted)

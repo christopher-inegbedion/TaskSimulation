@@ -38,6 +38,7 @@ loop = asyncio.new_event_loop()
 asyncio.set_event_loop(loop)
 
 print("\nStarted Pipeline websocket server...")
+print("Waiting for commands...")
 
 
 def create_pipeline(user_id, task_name, stage_names, number_of_constraints):
@@ -65,7 +66,7 @@ def create_pipeline(user_id, task_name, stage_names, number_of_constraints):
 def callback(pipe, args):
     global loop
     loop.run_until_complete(
-        call(args[0], pipe.current_stage.log.most_recent_update["msg"]))
+        call(args[0], pipe.current_stage.log.most_recent_update))
 
 
 def close(pipe, args):
@@ -79,7 +80,7 @@ async def _close(websocket):
 
 
 async def call(websocket, msg):
-    await websocket.send(msg)
+    await websocket.send(jsonpickle.encode(msg))
 
 
 async def launch(websocket, path):
@@ -132,7 +133,7 @@ async def launch(websocket, path):
 
         if recv_pipeline_id in pipelines:
             pipeline: Pipeline = pipelines[recv_pipeline_id]
-            pipeline.on_update(callback, websocket)
+            pipeline.on_constraint_complete(callback, websocket)
             pipeline.on_complete(close, websocket)
 
             pipeline.start()
