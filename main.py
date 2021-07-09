@@ -193,257 +193,161 @@ def build_constraint_view():
 def set_constraint_view(constraint_name=None, constraint_view=None):
     if constraint_name == None and constraint_view == None:
         constraint_name = input("~enter constraint name: ")
-        views = [{
-            "constraint_name": "Exchange rate",
+        views = [{"constraint_name": "Exchange rate", "view": [{"id": "1", "bg_color": "#ffffff", "bottom_section_can_expand": "1", "bottom_section_can_open": "1", "bottom_sheet_color": "#ffffff", "center_top_section_data": "1", "draggable_sheet_max_height": 0.2, "top_section": [{"components": [{"component_properties": ["constraint_name", "0.0,0.0,0.0,0.0", "Exchange rate constraint", "center", 25.0, "#000000"], "type":"text"}], "margin":"0.0,0.0,0.0,0.0"}, {"components": [{"component_properties": ["constraint_description", "0.0,0.0,20.0,20.0", "Calculate the exchange rate between two currencies.", "center", 16.0, "#000000"], "type":"text"}], "margin":"5.0,0.0,0.0,0.0"}], "bottom_section":[{"components": [{"component_properties": ["currency1", "0.0,0.0,20.0,10.0", "Currency 1", "Please enter a currency"], "type":"input"}, {"component_properties": ["currency2", "0.0,0.0,20.0,10.0", "Currency 2", "Please enter a currency"], "type":"input"}], "margin":"0.0,0.0,0.0,0.0"}, {"components": [{"type": "button", "component_properties": ["submit_btn", "0.0,0.0,0.0,0.0", "Submit", "center", {"commandName": "cv", "success": {"commandName": "iec", "success": {"commandName": "cv", "success": {"commandName": "sdtwss", "success": {"commandName": "tp", "success": None, "failure": None, "usePrevResult": False, "value": ["success"]}, "failure":{"commandName": "tp", "success": None, "failure": None, "usePrevResult": False, "value": ["fail"]}, "usePrevResult":True, "value":["{0}"]}, "failure":None, "usePrevResult":False, "value":["currency1", "currency2"]}, "failure":None, "usePrevResult":False, "value":["{0}", None]}, "failure":None, "usePrevResult":False, "value":["currency1", "currency2"]}, None]}], "margin":"0.0,0.0,0.0,0.0"}]}]},
+                 {"constraint_name": "Pause", "view": [{"id": "1", "bg_color": "#ffffff", "bottom_section_can_expand": "1", "bottom_section_can_open": "1", "bottom_sheet_color": "#ffffff", "center_top_section_data": "1", "draggable_sheet_max_height": 0.125, "top_section": [{"components": [{"component_properties": ["constraint_name", "0.0,0.0,0.0,0.0", "Pause constraint", "center", 25.0, "#000000"], "type":"text"}], "margin":"0.0,0.0,0.0,0.0"}, {"components": [{"component_properties": ["constraint_description", "0.0,0.0,0.0,0.0", "Halts the stage for a given duration.", "center", 16.0, "#000000"], "type":"text"}], "margin":"5.0,0.0,0.0,0.0"}], "bottom_section":[{"components": [{"component_properties": ["duration", "0.0,0.0,20.0,10.0", "Duration", "Please enter a duration"], "type":"input"}, {
+                     "type": "button", "component_properties": ["submit_btn", "0.0,0.0,0.0,0.0", "Submit", "center", {"commandName": "cv", "success": {"commandName": "iec", "success": {"commandName": "cv", "success": {"commandName": "sdtwss", "success": {"commandName": "tp", "success": None, "failure": None, "usePrevResult": False, "value": ["success"]}, "failure":{"commandName": "tp", "success": None, "failure": None, "usePrevResult": False, "value": ["fail"]}, "usePrevResult":True, "value":["{0}"]}, "failure":None, "usePrevResult":False, "value":["duration"]}, "failure":None, "usePrevResult":False, "value":["{0}", None]}, "failure":None, "usePrevResult":False, "value":["duration"]}, None]}], "margin":"0.0,0.0,0.0,0.0"}]}]},
+                 {"constraint_name": "Product description", "view": [{"id": "1", "bg_color": "#ffffff", "bottom_section_can_expand": "0", "bottom_section_can_open": "0", "bottom_sheet_color": "#ffffff", "center_top_section_data": "0", "draggable_sheet_max_height": 0.1, "top_section": [{"components": [{"component_properties": ["constraint_name", "30.0,0.0,20.0,20.0", "Product description constraint", "left", 20.0, "#000000"], "type":"text"}], "margin":"0.0,0.0,0.0,0.0"}, {"components": [{"component_properties": ["constraint_description", "5.0,0.0,20.0,20.0", "Calculate the exchange rate between two currencies.", "left", 16.0, "#000000"], "type":"text"}], "margin":"0.0,0.0,0.0,0.0"}, {"components": [
+                     {"component_properties": ["product_name", "60.0,0.0,20.0,0.0", "{Product name}", "left", 15.0, "#000000"], "type":"text"}], "margin":"0.0,0.0,0.0,0.0"}, {"components": [{"component_properties": ["product_name_desc", "5.0,0.0,20.0,0.0", "Product name", "left", 20.0, "#000000"], "type":"text"}], "margin":"0.0,0.0,0.0,0.0"}, {"components": [{"component_properties": ["product_name", "60.0,0.0,20.0,0.0", "{Product description}", "left", 15.0, "#000000"], "type":"text"}], "margin":"0.0,0.0,0.0,0.0"}, {"components": [{"component_properties": ["product_name_desc", "5.0,0.0,20.0,0.0", "Product description", "left", 20.0, "#000000"], "type":"text"}], "margin":"0.0,0.0,0.0,0.0"}], "bottom_section":[]}]},
+                 {
+            "constraint_name": "Product description_config",
             "view": [
                 {
+                    "id": "1",
                     "bg_color": "#ffffff",
-                    "bottom_section": [
-                        {
-                            "components": [
-                                {
-                                    "component_properties": [
-                                        "input1",
-                                        "0,0,10,10",
-                                        "Currency 1",
-                                        "Please enter a currency code"
-                                    ],
-                                    "type": "input"
-                                },
-                                {
-                                    "component_properties": [
-                                        "input2",
-                                        "0,0,10,10",
-                                        "Currency 2",
-                                        "Please enter a currency code"
-                                    ],
-                                    "type": "input"
-                                }
-                            ],
-                            "margin": "10,0,0,0"
-                        },
-                        {
-                            "components": [
-                                {
-                                    "component_properties": [
-                                        "button1",
-                                        "20,0,0,0",
-                                        "Submit",
-                                        "center",
-                                        "input_field",
-                                        "input1,input2",
-                                        "send_inputs",
-                                        "input1,input2",
-                                        "#000000"
-                                    ],
-                                    "type": "button"
-                                }
-                            ],
-                            "margin": "0,0,0,0"
-                        }
-                    ],
-                    "bottom_section_can_expand": "1",
-                    "bottom_section_can_open": "1",
+                    "bottom_section_can_expand": "0",
+                    "bottom_section_can_open": "0",
                     "bottom_sheet_color": "#ffffff",
                     "center_top_section_data": "1",
-                    "draggable_sheet_max_height": "0.4",
-                    "id": "1",
+                    "draggable_sheet_max_height": 0.7,
                     "top_section": [
                         {
                             "components": [
                                 {
                                     "component_properties": [
                                         "text1",
-                                        "0,0,0,0",
-                                        "Exchange rate",
-                                        "center",
-                                        "20",
+                                        "0.0,0.0,30.0,0.0",
+                                        "Product description",
+                                        "left",
+                                        25,
                                         "#000000"
                                     ],
                                     "type": "text"
                                 }
                             ],
-                            "margin": "0,0,0,0"
+                            "margin": "0.0,0.0,0.0,0.0"
+                        },
+                        {
+                            "components": [
+                                {
+                                    "component_properties": [
+                                        "text2",
+                                        "5.0,0.0,0.0,0.0",
+                                        "Enter your product description details",
+                                        "left",
+                                        18,
+                                        "#000000"
+                                    ],
+                                    "type": "text"
+                                }
+                            ],
+                            "margin": "0.0,0.0,30.0,0.0"
+                        },
+                        {
+                            "components": [
+                                {
+                                    "component_properties": [
+                                        "text3",
+                                        "50.0,0.0,30.0,0.0",
+                                        "The name of your product",
+                                        "left",
+                                        18,
+                                        "#000000"
+                                    ],
+                                    "type": "text"
+                                }
+                            ],
+                            "margin": "0.0,0.0,0.0,0.0"
+                        },
+                        {
+                            "components": [
+                                {
+                                    "component_properties": [
+                                        "input1",
+                                        "5.0,0.0,0.0,0.0",
+                                        "Product name",
+                                        "Please enter the product name"
+                                    ],
+                                    "type": "input"
+                                }
+                            ],
+                            "margin": "0.0,0.0,30.0,30.0"
+                        },
+                        {
+                            "components": [
+                                {
+                                    "component_properties": [
+                                        "text4",
+                                        "50.0,0.0,30.0,0.0",
+                                        "The description of your product",
+                                        "left",
+                                        18,
+                                        "#000000"
+                                    ],
+                                    "type": "text"
+                                }
+                            ],
+                            "margin": "0.0,0.0,0.0,0.0"
+                        },
+                        {
+                            "components": [
+                                {
+                                    "component_properties": [
+                                        "input2",
+                                        "5.0,0.0,0.0,0.0",
+                                        "Product description",
+                                        "Please describe your product"
+                                    ],
+                                    "type": "input"
+                                }
+                            ],
+                            "margin": "0.0,0.0,30.0,30.0"
+                        },
+                        {
+                            "components": [
+                                {
+                                    "type": "button",
+                                    "component_properties": [
+                                        "complete_btn",
+                                        "0.0,0.0,0.0,0.0",
+                                        "Save",
+                                        "right",
+                                        {
+                                            "commandName": "cv",
+                                            "success": {
+                                                "commandName": "sevtl",
+                                                "success": {
+                                                    "commandName": "cv",
+                                                    "success": {
+                                                        "commandName": "sevtl",
+                                                        "success": None,
+                                                        "failure": None,
+                                                        "usePrevResult": False,
+                                                        "value": ["config_inputs", "{0}", False]
+                                                    },
+                                                    "failure": None,
+                                                    "usePrevResult": False,
+                                                    "value": ["input2"]
+                                                },
+                                                "failure": None,
+                                                "usePrevResult": False,
+                                                "value": ["config_inputs", "{0}", False]
+                                            },
+                                            "failure": None,
+                                            "usePrevResult": False,
+                                            "value": [
+                                                "input1",
+                                            ]
+                                        },
+                                        None
+                                    ]
+                                }
+                            ],
+                            "margin": "40.0,0.0,0.0,30.0"
                         }
-                    ]
+                    ],
+                    "bottom_section": []
                 }
             ]
-        },
-            {
-                "constraint_name": "Pause",
-                "view": [
-                    {
-                        "bg_color": "#ffffff",
-                        "bottom_section": [
-                            {
-                                "components": [
-                                    {
-                                        "component_properties": [
-                                            "input1",
-                                            "1,0,0,0",
-                                            "Duration",
-                                            "Please enter a duration"
-                                        ],
-                                        "type": "input"
-                                    },
-                                    {
-                                        "component_properties": [
-                                            "button1",
-                                            "0,0,0,0",
-                                            "Submit",
-                                            "center",
-                                            "input_field",
-                                            "input1",
-                                            "send_inputs",
-                                            "input1",
-                                            "#000000"
-                                        ],
-                                        "type": "button"
-                                    }
-                                ],
-                                "margin": "10,0,0,0"
-                            }
-                        ],
-                        "bottom_section_can_expand": "1",
-                        "bottom_section_can_open": "1",
-                        "bottom_sheet_color": "#ffffff",
-                        "center_top_section_data": "1",
-                        "draggable_sheet_max_height": "0.3",
-                        "id": "1",
-                        "top_section": [
-                            {
-                                "components": [
-                                    {
-                                        "component_properties": [
-                                            "text1",
-                                            "0,0,0,0",
-                                            "Pause",
-                                            "center",
-                                            "30",
-                                            "#000000"
-                                        ],
-                                        "type": "text"
-                                    }
-                                ],
-                                "margin": "0,0,0,0"
-                            }
-                        ]
-                    }
-                ]
-        },
-            {
-                "constraint_name": "Product description",
-                "view": [
-                    {
-                        "bg_color": "#ffffff",
-                        "bottom_section": [
-                            {
-                                "components": [
-                                    {
-                                        "component_properties": [
-                                            "text6",
-                                            "0,0,0,0",
-                                            "-",
-                                            "left",
-                                            "1",
-                                            "#000000"
-                                        ],
-                                        "type": "text"
-                                    }
-                                ],
-                                "margin": "0,0,0,0"
-                            }
-                        ],
-                        "bottom_section_can_expand": "0",
-                        "bottom_section_can_open": "0",
-                        "bottom_sheet_color": "#ffffff",
-                        "center_top_section_data": "0",
-                        "draggable_sheet_max_height": "0.1",
-                        "id": "1",
-                        "top_section": [
-                            {
-                                "components": [
-                                    {
-                                        "component_properties": [
-                                            "text1",
-                                            "40,0,30,0",
-                                            "Product description constraint",
-                                            "left",
-                                            "20",
-                                            "#000000"
-                                        ],
-                                        "type": "text"
-                                    }
-                                ],
-                                "margin": "0,0,0,0"
-                            },
-                            {
-                                "components": [
-                                    {
-                                        "component_properties": [
-                                            "text2",
-                                            "0,0,0,0",
-                                            "{Product name}",
-                                            "left",
-                                            "25",
-                                            "#000000"
-                                        ],
-                                        "type": "text"
-                                    },
-                                ],
-                                "margin": "40,0,30,0"
-                            },
-                            {
-                                "components": [
-                                    {
-                                        "component_properties": [
-                                            "text3",
-                                            "5,0,30,0",
-                                            "Product name",
-                                            "left",
-                                            "15",
-                                            "#000000"
-                                        ],
-                                        "type": "text"
-                                    },
-                                ],
-                                "margin": "0,0,0,0"
-                            },
-                            {
-                                "components": [
-                                    {
-                                        "component_properties": [
-                                            "text4",
-                                            "30,0,0,0",
-                                            "{Product description}",
-                                            "left",
-                                            "25",
-                                            "#000000"
-                                        ],
-                                        "type": "text"
-                                    },
-                                ],
-                                "margin": "0,0,30,0"
-                            },
-                            {
-                                "components": [
-                                    {
-                                        "component_properties": [
-                                            "text7",
-                                            "0,0,0,0",
-                                            "Product description",
-                                            "left",
-                                            "15",
-                                            "#000000"
-                                        ],
-                                        "type": "text"
-                                    },
-                                ],
-                                "margin": "5,0,30,0"
-                            }
-                        ]
-                    }
-                ]
         }]
         constraint_view = input("~constraint view index: ")
         selected_constraint_view: dict = views[int(constraint_view)-1]

@@ -26,6 +26,15 @@ all_constraints = {
 all_constraint_views = {}
 
 
+def create_constraint(constraint_name):
+    if constraint_name == "Exchange rate":
+        return CustomConstraint("Exchange rate", "View the current exchange rate between 2 currencies", InternetModel())
+    elif constraint_name == "Pause":
+        return CustomConstraint("Pause", "A constraint to pause", PauseModel())
+    elif constraint_name == "Product description":
+        return CustomConstraint("Product description", "View the product's basic information", ProductDescriptionModel())
+
+
 @app.route('/')
 def index():
     return f"all users: {all_users}, all tasks: {all_tasks}"
@@ -73,7 +82,6 @@ def constraint_view(constraint_name):
         try:
             constraint_view = jsonpickle.decode(request.form["view"])
             all_constraint_views[constraint_name] = constraint_view
-            print(constraint_view)
 
             return {"result": "success"}
         except:
@@ -168,6 +176,7 @@ def get_stage_groups():
         return f"all stage groups: {all_stage_groups}"
     elif request.method == "POST":
         stages_data = json.loads(request.data)["stages"]
+        # print(json.loads(request.data))
         stage_group = StageGroup()
         for stage in stages_data:
             stage_name = stage["stage_name"]
@@ -177,9 +186,13 @@ def get_stage_groups():
                 constraint_name = constraint["constraint_name"]
                 config_inputs = constraint["config_inputs"]
                 if constraint_name in all_constraints:
-                    constraint_obj: Constraint = all_constraints[constraint_name]
-                    for input in config_inputs:
-                        constraint_obj.add_configuration_input(config_inputs[input])
+                    constraint_obj: Constraint = create_constraint(
+                        constraint_name)
+                    if constraint_obj.model.configuration_input_required:
+                        for input in config_inputs["config_inputs"]:
+                            print(input, constraint_name)
+                            constraint_obj.add_configuration_input(
+                                input)
                     new_stage.add_constraint(all_constraints[constraint_name])
                 else:
                     return {"result": "fail", "msg": f"constraint {constraint_name} not found"}

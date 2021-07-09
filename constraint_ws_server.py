@@ -174,7 +174,8 @@ async def launch(websocket, path):
                                 constraint_details.name, stage_name, stage_group_id)
                             if config_inputs != None:
                                 for i in config_inputs:
-                                    new_constraint.add_configuration_input(config_inputs[i])
+                                    new_constraint.add_configuration_input(
+                                        config_inputs[i])
 
                             new_stage.add_constraint(new_constraint)
                         new_stage_groups.add_stage(new_stage)
@@ -254,6 +255,12 @@ async def launch(websocket, path):
         task_id = constraint_inputs["task_id"]
         print(
             f"data recieved for constraint: [{constraint_name}] in stage: [{stage_name}] with task id: [{task_id}]")
+
+        if task_id == None:
+            raise Exception(f"Task with ID: {task_id} cannot be found")
+
+        if user_id == None:
+            raise Exception(f"User with ID: {user_id} cannot be found")
 
         pipeline: Pipeline = all_pipelines[task_id]["sessions"][user_id]
         print(f"running for stage: {stage_name}")
