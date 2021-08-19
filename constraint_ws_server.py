@@ -1,5 +1,11 @@
 import asyncio
+from delivery1_model import DeliveryModel
+from chat_model import ChatModel
 import json
+from time_range_model import TimeRangeModel
+from password_model import PasswordModel
+from product_link_model import ProductLinkModel
+from order_product_model import OrderProductModel
 import threading
 from constraints.constraint_main.constraint import Constraint
 from constraints.enums.input_type import InputType
@@ -16,6 +22,7 @@ from product_description_model import ProductDescriptionModel
 import websockets
 import nest_asyncio
 from rich.traceback import install
+import traceback
 
 install()
 nest_asyncio.apply()
@@ -23,6 +30,7 @@ nest_asyncio.apply()
 all_pipelines = {}
 all_pipeline_details = {}
 all_pipeline_owner_websockets = {}
+on_config_change_websockets = []
 
 task_session_count_mutex = threading.Lock()
 task_session_pending_users_mutex = threading.Lock()
@@ -42,6 +50,18 @@ def create_constraint(constraint_name):
         return CustomConstraint("Pause", "A constraint to pause", PauseModel())
     elif constraint_name == "Product description":
         return CustomConstraint("Product description", "View the product's basic information", ProductDescriptionModel())
+    elif constraint_name == "Order confirmation":
+        return CustomConstraint("Order confirmation", "This constraint confirms the order", OrderProductModel())
+    elif constraint_name == "Product link":
+        return CustomConstraint("Product link", "Provide a link to a URL for your customer", ProductLinkModel())
+    elif constraint_name == "Password":
+        return CustomConstraint("Password", "Requires a secret word/phrase before access can be granted", PasswordModel())
+    elif constraint_name == "Time range":
+        return CustomConstraint("Time range", "Set a time for where your task can be accessed.", TimeRangeModel())
+    elif constraint_name == "Chat":
+        return CustomConstraint("Chat", "Chat with your customers", ChatModel())
+    elif constraint_name == "Delivery":
+        return CustomConstraint("Delivery", "View the current delivery status", DeliveryModel())
 
 
 def event_handler(pipe, args):
@@ -50,7 +70,23 @@ def event_handler(pipe, args):
 
 
 async def event_handler_implementation(websocket, pipe: Pipeline):
-    await websocket.send(jsonpickle.encode(pipe.current_stage.log.most_recent_update))
+    recent_event = pipe.current_stage.log.most_recent_update
+    data_to_send = {
+        "event": recent_event["event"].name,
+        "value": recent_event["value"],
+        "msg": recent_event["msg"]
+    }
+    await websocket.send(jsonpickle.encode(data_to_send))
+
+
+def on_config_handler(data, args):
+    loop.run_until_complete(on_config_handler_implementation(args[0], data))
+
+
+async def on_config_handler_implementation(websocket, data):
+    data_to_send = {"data": data}
+    for socket in on_config_change_websockets:
+        await socket.send(jsonpickle.encode(data_to_send))
 
 
 def stage_complete_handler(pipe: Pipeline, args):
@@ -59,7 +95,8 @@ def stage_complete_handler(pipe: Pipeline, args):
     user_id = args[1]
     event = pipe.current_stage.log.most_recent_update
 
-    if event["event"] == "STAGE_COMPLETED":
+    if event["event"] == StageStatus.COMPLETE:
+        print(event)
         if event["value"] == "Pending":
             loop.run_until_complete(update_session_count(task_id))
             loop.run_until_complete(
@@ -70,6 +107,21 @@ def stage_complete_handler(pipe: Pipeline, args):
         elif event["value"] == "Complete":
             loop.run_until_complete(
                 update_complete_users_count(task_id, user_id))
+
+
+def external_action_func(constraint_name, command, data, args):
+    loop.run_until_complete(external_action_func_implementation(
+        args[0], constraint_name, command, data))
+
+
+async def external_action_func_implementation(websocket, constraint_name, command, data):
+    data_to_send = {
+        "constraint_name": constraint_name,
+        "command": command,
+        "data": data
+    }
+
+    await websocket.send(jsonpickle.encode(data_to_send))
 
 
 async def update_session_count(task_id):
@@ -124,7 +176,7 @@ async def update_complete_users_count(task_id, user_id):
 
 def get_constraint_config_inputs(constraint_name, stage_name, stage_group_id):
     stage_data = perform_network_action(
-        "http://localhost:8000/stage_group/"+stage_group_id + "/"+stage_name, "get")
+        "http://constraint-rest-server.herokuapp.com/stage_group/"+stage_group_id + "/"+stage_name, "get")
     all_constraints = stage_data["constraints"]
     for constraint in all_constraints:
         if constraint["constraint_name"] == constraint_name:
@@ -143,13 +195,13 @@ async def launch(websocket, path):
         user_id = data["user_id"]
         stage_name = data["stage_name"]
         task_id = data["task_id"]
-        print(f"start pipeline command. User ID: {user_id}...")
+        print(f"Start pipeline command. User ID: {user_id}...")
 
         if user_id not in all_pipelines[task_id]["sessions"]:
             print(f"Creating new pipeline instance for user: {user_id}")
             # Get the task's details from the DB
             task_data = perform_network_action(
-                "http://localhost:8000/task/"+task_id, "get")
+                "http://constraint-rest-server.herokuapp.com/task/"+task_id, "get")
             task_name = task_data["name"]
             task_desc = task_data["desc"]
             stage_group_id = task_data["stage_group_id"]
@@ -158,7 +210,7 @@ async def launch(websocket, path):
                 try:
                     new_task = Task(task_name, task_desc)
                     stage_group_data = perform_network_action(
-                        "http://localhost:8000/stage_group/"+stage_group_id, "get")
+                        "http://constraint-rest-server.herokuapp.com/stage_group/"+stage_group_id, "get")
                     print("Stage group details retrieved from database...")
                     new_stage_groups = StageGroup()
                     stages = stage_group_data["stages"]
@@ -171,11 +223,11 @@ async def launch(websocket, path):
                             new_constraint = CustomConstraint(
                                 constraint_details.name, constraint_details.description, constraint_details.model)
                             config_inputs = get_constraint_config_inputs(
-                                constraint_details.name, stage_name, stage_group_id)
+                                constraint, stage["stage_name"], stage_group_id)
                             if config_inputs != None:
                                 for i in config_inputs:
                                     new_constraint.add_configuration_input(
-                                        config_inputs[i])
+                                        config_inputs[i], key=i)
 
                             new_stage.add_constraint(new_constraint)
                         new_stage_groups.add_stage(new_stage)
@@ -198,6 +250,8 @@ async def launch(websocket, path):
                         "result": "success"
                     }))
                 except Exception as e:
+                    traceback.print_exc()
+
                     print(e)
                     await websocket.send(jsonpickle.encode({
                         "result": "fail"
@@ -243,6 +297,21 @@ async def launch(websocket, path):
             )
 
             pipeline.start_constraint(stage_name, constraint_name)
+
+        print(all_pipelines)
+
+        if "started_users" not in all_pipelines[task_id]:
+            all_pipelines[task_id]["started_users"] = {}
+
+        if stage_name not in all_pipelines[task_id]["started_users"]:
+            all_pipelines[task_id]["started_users"][stage_name] = {}
+
+        if constraint_name not in all_pipelines[task_id]["started_users"][stage_name]:
+            all_pipelines[task_id]["started_users"][stage_name][constraint_name] = [
+            ]
+
+        all_pipelines[task_id]["started_users"][stage_name][constraint_name].append(
+            user_id)
 
     elif path == "/start_constraint2":
         # receive constraint input data
@@ -302,11 +371,22 @@ async def launch(websocket, path):
         constraint = pipeline.get_constraint(constraint_name, stage_name)
 
         value = {
-            "status": constraint.get_status().value,
+            "status": constraint.get_status().name,
             "required": constraint.model.input_count != 0
         }
 
         await websocket.send(jsonpickle.encode(value))
+
+    elif path == "/listen_external_action":
+        data = jsonpickle.decode(await websocket.recv())
+        constraint_name = data["constraint_name"]
+        stage_name = data["stage_name"]
+        task_id = data["task_id"]
+        user_id = data["user_id"]
+        pipeline: Pipeline = all_pipelines[task_id]["sessions"][user_id]
+        constraint: Constraint = pipeline.get_constraint(
+            constraint_name, stage_name)
+        constraint.on_external_action(external_action_func, websocket)
 
     elif path == "/is_stage_running":
         constraint_inputs = jsonpickle.decode(await websocket.recv())
@@ -332,9 +412,13 @@ async def launch(websocket, path):
                 await websocket.send(jsonpickle.encode({"value": "running"}))
             elif pipeline.get_stage(stage_name).status == StageStatus.NOT_STARTED:
                 await websocket.send(jsonpickle.encode({"value": "not_started"}))
+            elif pipeline.get_stage(stage_name).status == StageStatus.CONSTRAINT_STARTED:
+                await websocket.send(jsonpickle.encode({"value": "constraint_active", "constraint": pipeline.get_active_constraint()[0].name}))
+            elif pipeline.get_stage(stage_name).status == StageStatus.CONSTRAINT_COMPLETED:
+                await websocket.send(jsonpickle.encode({"value": "running"}))
+
         else:
             await websocket.send(jsonpickle.encode({"value": "not_started"}))
-            print(f"{stage_name} has not started")
         print()
 
     elif path == "/is_pipe_running":
@@ -376,11 +460,30 @@ async def launch(websocket, path):
         data = jsonpickle.decode(await websocket.recv())
         task_id = data["task_id"]
 
+        print(all_pipeline_details)
         if task_id in all_pipeline_details:
             pipeline_details = all_pipeline_details[task_id]
             data_to_send = {"session_count": pipeline_details["session_count"], "pending_users": pipeline_details["pending_users"],
                             "active_users": pipeline_details["active_users"], "complete_users": pipeline_details["complete_users"]}
             await websocket.send(jsonpickle.encode(data_to_send))
+
+    elif path == "/pipeline_constraint_details":
+        data = jsonpickle.decode(await websocket.recv())
+        task_id = data["task_id"]
+        stage_name = data["stage_name"]
+
+        if stage_name == "Pending":
+            data_to_send = {
+                "Pending": all_pipelines[task_id]["started_users"]["Pending"], }
+        elif stage_name == "Active":
+            data_to_send = {
+                "Active": all_pipelines[task_id]["started_users"]["Active"]}
+        elif stage_name == "Complete":
+            data_to_send = {
+                "Complete": all_pipelines[task_id]["started_users"]["Complete"]}
+        print(data_to_send)
+
+        await websocket.send(jsonpickle.encode(data_to_send))
 
     elif path == "/next_constraint_or_stage":
         data = jsonpickle.decode(await websocket.recv())
@@ -402,6 +505,33 @@ async def launch(websocket, path):
 
         config_inputs = {"data": "datadata", "data2": "data2data2"}
         await websocket.send(jsonpickle.encode(config_inputs))
+
+    elif path == "/on_config_change":
+        data = jsonpickle.decode(await websocket.recv())
+        user_id = data["user_id"]
+        constraint_name = data["constraint_name"]
+        stage_name = data["stage_name"]
+        task_id = data["task_id"]
+
+        pipeline: Pipeline = all_pipelines[task_id]["sessions"][user_id]
+        constraint: Constraint = pipeline.get_constraint(
+            constraint_name, stage_name)
+        on_config_change_websockets.append(websocket)
+        constraint.on_config_action(on_config_handler, websocket)
+
+    elif path == "/send_listen_data":
+        data = jsonpickle.decode(await websocket.recv())
+        user_id = data["user_id"]
+        constraint_name = data["constraint_name"]
+        stage_name = data["stage_name"]
+        task_id = data["task_id"]
+        command_msg = data["command_msg"]
+        command_data = data["command_data"]
+
+        pipeline: Pipeline = all_pipelines[task_id]["sessions"][user_id]
+        constraint: Constraint = pipeline.get_constraint(
+            constraint_name, stage_name)
+        constraint.send_listen_data(command_msg, command_data)
 
     while websocket.open:
         await asyncio.sleep(0)

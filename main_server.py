@@ -1,3 +1,9 @@
+from delivery1_model import DeliveryModel
+from chat_model import ChatModel
+from time_range_model import TimeRangeModel
+from password_model import PasswordModel
+from product_link_model import ProductLinkModel
+from order_product_model import OrderProductModel
 from constraints.constraint_main.constraint import Constraint
 from constraints.constraint_main.custom_constraint import CustomConstraint
 from constraints.models.example_models.pause_thread import PauseModel
@@ -21,7 +27,13 @@ all_stage_groups = {}
 all_constraints = {
     "Exchange rate": CustomConstraint("Exchange rate", "View the current exchange rate between 2 currencies", InternetModel()),
     "Pause": CustomConstraint("Pause", "A constraint to pause", PauseModel()),
-    "Product description": CustomConstraint("Product description", "View the product's basic information", ProductDescriptionModel())
+    "Product description": CustomConstraint("Product description", "View the product's basic information", ProductDescriptionModel()),
+    "Order confirmation": CustomConstraint("Order confirmation", "This constraint confirms the order", OrderProductModel()),
+    "Product link": CustomConstraint("Product link", "Provide a link to a URL for your customer", ProductLinkModel()),
+    "Password": CustomConstraint("Password", "Requires a secret word/phrase before access can be granted", PasswordModel()),
+    "Time range": CustomConstraint("Time range", "Set a time for where your task can be accessed.", TimeRangeModel()),
+    "Chat": CustomConstraint("Chat", "Chat with your customers", ChatModel()),
+    "Delivery": CustomConstraint("Delivery", "View the current delivery status", DeliveryModel())
 }
 all_constraint_views = {}
 
@@ -33,6 +45,18 @@ def create_constraint(constraint_name):
         return CustomConstraint("Pause", "A constraint to pause", PauseModel())
     elif constraint_name == "Product description":
         return CustomConstraint("Product description", "View the product's basic information", ProductDescriptionModel())
+    elif constraint_name == "Order confirmation":
+        return CustomConstraint("Order confirmation", "This constraint confirms the order", OrderProductModel())
+    elif constraint_name == "Product link":
+        return CustomConstraint("Product link", "Provide a link to a URL for your customer", ProductLinkModel())
+    elif constraint_name == "Password":
+        return CustomConstraint("Password", "Requires a secret word/phrase before access can be granted", PasswordModel())
+    elif constraint_name == "Time range":
+        return CustomConstraint("Time range", "Set a time for where your task can be accessed.", TimeRangeModel())
+    elif constraint_name == "Chat":
+        return CustomConstraint("Chat", "Chat with your customers", ChatModel())
+    elif constraint_name == "Delivery":
+        return CustomConstraint("Delivery", "View the current delivery status", DeliveryModel())
 
 
 @app.route('/')
@@ -190,10 +214,9 @@ def get_stage_groups():
                         constraint_name)
                     if constraint_obj.model.configuration_input_required:
                         for input in config_inputs["config_inputs"]:
-                            print(input, constraint_name)
                             constraint_obj.add_configuration_input(
                                 input)
-                    new_stage.add_constraint(all_constraints[constraint_name])
+                    new_stage.add_constraint(constraint_obj)
                 else:
                     return {"result": "fail", "msg": f"constraint {constraint_name} not found"}
 

@@ -22,6 +22,7 @@ class ProductDescriptionModel(Model):
     def run(self, inputs, configuration_inputs={}):
         super().run(inputs)
 
+        print("done done")
         self._complete(True)
 
     def _complete(self, data, aborted=False):

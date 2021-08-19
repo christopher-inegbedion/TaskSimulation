@@ -188,7 +188,8 @@ async def launch(websocket, path):
         else:
             await websocket.send("fail")
 
-start_server = websockets.serve(launch, "localhost", 5000)
+start_server = websockets.serve(
+    launch, "constraint-rest-server.herokuapp.com", 5000)
 
 loop.run_until_complete(start_server)
 loop.run_forever()
